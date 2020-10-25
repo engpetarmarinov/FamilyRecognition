@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
+    <title>Family Recognition</title>
+    <link rel="icon" type="image/png" href="favicon.png" />
+</head>
+
+<body onload='init()'>
+    <div id='webcam-container'></div>
+    <div id='label-container'></div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        // More API functions here:
+        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+        // the link to your model provided by Teachable Machine export panel
+        const URL = 'model/';
+
+        let model, webcam, labelContainer, maxPredictions;
+
+        // Load the image model and setup the webcam
+        async function init() {
+            const modelURL = URL + 'model.json';
+            const metadataURL = URL + 'metadata.json';
+
+            // load the model and metadata
+            // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+            // or files from your local hard drive
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // Convenience function to setup a webcam
+            const flip = true; // whether to flip the webcam
+            webcam = new tmImage.Webcam(1280, 768, flip); // width, height, flip
+            await webcam.setup(); // request access to the webcam
+            webcam.play();
+            window.requestAnimationFrame(loop);
+
+            // append elements to the DOM
+            document.getElementById('webcam-container').appendChild(webcam.canvas);
+            labelContainer = document.getElementById('label-container');
+            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                labelContainer.appendChild(document.createElement('div'));
+            }
+        }
+
+        async function loop() {
+            webcam.update(); // update the webcam frame
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        let greetingPesho = [
+            new Audio('greetings/pesho.m4a'),
+            new Audio('greetings/pesho1.m4a'),
+            new Audio('greetings/pesho2.m4a'),
+            new Audio('greetings/pesho3.m4a'),
+            new Audio('greetings/pesho4.m4a'),
+            new Audio('greetings/pesho5.m4a'),
+            new Audio('greetings/pesho6.m4a'),
+            new Audio('greetings/pesho7.m4a'),
+            new Audio('greetings/pesho8.m4a'),
+        ];
+        let greetingsPetia = [
+            new Audio('greetings/petia.m4a'),
+            new Audio('greetings/petia1.m4a'),
+            new Audio('greetings/petia2.m4a'),
+            new Audio('greetings/petia3.m4a'),
+            new Audio('greetings/petia4.m4a'),
+            new Audio('greetings/petia5.m4a')
+        ];
+        let greetingsPami = [
+            new Audio('greetings/pami.m4a'),
+            new Audio('greetings/pami1.m4a'),
+            new Audio('greetings/pami2.m4a'),
+            new Audio('greetings/pami3.m4a'),
+            new Audio('greetings/pami4.m4a'),
+            new Audio('greetings/pami5.m4a'),
+        ];
+        let greetingsMartin = [
+            new Audio('greetings/martin.m4a'),
+            new Audio('greetings/martin1.m4a'),
+            new Audio('greetings/martin2.m4a'),
+            new Audio('greetings/martin3.m4a'),
+            new Audio('greetings/martin4.m4a'),
+            new Audio('greetings/martin5.m4a')
+        ];
+
+        // run the webcam image through the image model
+        async function predict() {
+            // predict can take in an image, video or canvas html element
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ': ' + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+                if (prediction[i].probability > 0.94) {
+                    greet(prediction[i].className);
+                }
+            }
+        }
+        let mux = {
+            name,
+            lock: function(name) {
+                let that = this;
+                
+                if (that.name == name) {
+                    return false;
+                }
+                console.log(that.name);
+                that.name = name;
+                setTimeout(function() {
+                    console.log("cleared!");
+                    that.name = undefined;
+                }, 5000)
+                return true;
+            }
+        };
+
+        function greet(name) {
+            if (name == 'Пешо') {
+                if (mux.lock(name))
+                    greetingPesho[Math.floor(Math.random() * greetingPesho.length)].play();
+            }
+
+            if (name == 'Петя') {
+                if (mux.lock(name)) 
+                greetingsPetia[Math.floor(Math.random() * greetingsPetia.length)].play();
+            }
+
+            if (name == 'Мартин') {
+                if (mux.lock(name)) 
+                greetingsMartin[Math.floor(Math.random() * greetingsMartin.length)].play();
+            }
+
+            if (name == 'Пами') {
+                if (mux.lock(name)) 
+                greetingsPami[Math.floor(Math.random() * greetingsPami.length)].play();
+            }
+        }
+    </script>
+
+</body>
+
+</html>
